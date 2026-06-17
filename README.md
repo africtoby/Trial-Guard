@@ -1,20 +1,43 @@
+# TRIAL GUARD
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+  <img width="600" alt="Trial Guard Preview" src="https://raw.githubusercontent.com/africtoby/Trial-Guard/refs/heads/main/TrialGuardLandingPage.jpg" />
 </div>
 
-# Run and deploy your AI Studio app
+That one free trial and subscription tracker you need so you NEVER get debited after your free trial or subscription ends.
 
-This contains everything you need to run your app locally.
+<details>
+<summary><b>Click to view full documentation</b></summary>
 
-View your app in AI Studio: https://ai.studio/apps/8c04057d-ca06-4016-9618-3c9f4ded651d
+---
+<div align="center">
+  <img width="600" alt="Dashboard Preview" src="https://raw.githubusercontent.com/africtoby/Trial-Guard/refs/heads/main/Dashboard.jpg" />
+</div>
 
-## Run Locally
+### Features
+* **Monitor**: Track all active trials and subscriptions in one place.
+* **Remind**: Generate local .ics files to alert you before renewal.
+* **Secure**: Your data is stored locally and stays on your device.
 
-**Prerequisites:**  Node.js
+### Quick-Start Guide
 
+#### 1. Clone the repository
+```bash
+git clone [https://github.com/strictoby/Trial-Guard.git](https://github.com/strictoby/Trial-Guard.git)
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```
+#### 2. Navigate to folder
+```bash
+cd Trial-Guard
+
+```
+#### 3. Install dependencies
+```bash
+npm install
+
+```
+#### 4. Run the app
+```bash
+npm run dev
+
+```
+</details>

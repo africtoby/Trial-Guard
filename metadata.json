@@ -1,0 +1,8 @@
+{
+  "name": "TrialGuard",
+  "description": "A fully functional subscription and free-trial tracker designed to monitor guaranteed monthly spend and at-risk capital.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+
+declare const pendo: any;
 import { Subscription } from './types';
 import { calculateEndDate, formatFriendlyDate, getDaysRemaining } from './utils';
 import { 
@@ -105,25 +107,66 @@ export default function App() {
     setSubscriptions((prev) => [completedSub, ...prev]);
   };
 
-  const cancelSubscription = (id: string) => {
+  const cancelSubscription = (id: string, source: string = 'watchlist') => {
+    const sub = subscriptions.find((s) => s.id === id);
+    if (sub) {
+      pendo.track('subscription_canceled', {
+        subscription_id: id,
+        subscription_name: sub.name,
+        cost: sub.cost,
+        is_trial: sub.isTrial,
+        days_remaining: getDaysRemaining(sub.endDate),
+        source,
+      });
+    }
     setSubscriptions((prev) =>
       prev.map((sub) => (sub.id === id ? { ...sub, status: 'canceled' as const } : sub))
     );
   };
 
   const reactivateSubscription = (id: string) => {
+    const sub = subscriptions.find((s) => s.id === id);
+    if (sub) {
+      pendo.track('subscription_reactivated', {
+        subscription_id: id,
+        subscription_name: sub.name,
+        cost: sub.cost,
+        is_trial: sub.isTrial,
+        end_date: sub.endDate,
+      });
+    }
     setSubscriptions((prev) =>
       prev.map((sub) => (sub.id === id ? { ...sub, status: 'active' as const } : sub))
     );
   };
 
   const deleteSubscription = (id: string) => {
+    const sub = subscriptions.find((s) => s.id === id);
+    if (sub) {
+      pendo.track('subscription_deleted', {
+        subscription_id: id,
+        subscription_name: sub.name,
+        cost: sub.cost,
+        is_trial: sub.isTrial,
+        status_at_deletion: sub.status,
+        days_remaining: getDaysRemaining(sub.endDate),
+        total_subscriptions_after: subscriptions.length - 1,
+      });
+    }
     setSubscriptions((prev) => prev.filter((sub) => sub.id !== id));
   };
 
   // Reset demo storage helper
   const clearAllSubscriptions = () => {
     if (window.confirm('Are you sure you want to clear all tracked items and restart with a clean state?')) {
+      pendo.track('all_subscriptions_cleared', {
+        subscriptions_cleared_count: subscriptions.length,
+        active_count: subscriptions.filter((s) => s.status === 'active').length,
+        canceled_count: subscriptions.filter((s) => s.status === 'canceled').length,
+        trial_count: subscriptions.filter((s) => s.isTrial).length,
+        total_monthly_spend: subscriptions.filter((s) => s.status === 'active' && !s.isTrial).reduce((sum, s) => sum + s.cost, 0),
+        total_at_risk_capital: subscriptions.filter((s) => s.status === 'active' && s.isTrial).reduce((sum, s) => sum + s.cost, 0),
+      });
       setSubscriptions([]);
     }
   };
@@ -183,6 +226,15 @@ export default function App() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+
+    pendo.track('calendar_reminder_downloaded', {
+      subscription_name: sub.name,
+      cost: sub.cost,
+      is_trial: sub.isTrial,
+      end_date: sub.endDate,
+      days_remaining: getDaysRemaining(sub.endDate),
+      file_name: `${sub.name}-reminder.ics`,
+    });
   };
 
   // Form Submission Handler
@@ -216,6 +268,17 @@ export default function App() {
       status: 'active',
     });
 
+    const calculatedEnd = calculateEndDate(startDate, parsedDuration);
+    pendo.track('subscription_added', {
+      subscription_name: name.trim(),
+      cost: parsedCost,
+      is_trial: isTrial,
+      start_date: startDate,
+      duration_days: parsedDuration,
+      calculated_end_date: calculatedEnd,
+      total_subscriptions_after: subscriptions.length + 1,
+    });
+
     // Reset Form (Except StartDate & Duration to simplify quick inserts)
     setName('');
     setCost('');
@@ -243,6 +306,24 @@ export default function App() {
       return matchesSearch && matchesFilter;
     });
   }, [subscriptions, searchQuery, statusFilter]);
+
+  // Debounced search tracking
+  const searchTrackDataRef = useRef({ filteredSubscriptions, subscriptions, statusFilter });
+  searchTrackDataRef.current = { filteredSubscriptions, subscriptions, statusFilter };
+
+  useEffect(() => {
+    if (!searchQuery.trim()) return;
+    const timer = setTimeout(() => {
+      const { filteredSubscriptions, subscriptions, statusFilter } = searchTrackDataRef.current;
+      pendo.track('watchlist_searched', {
+        search_query: searchQuery.trim(),
+        results_count: filteredSubscriptions.length,
+        total_subscriptions: subscriptions.length,
+        active_filter: statusFilter,
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Helper to compute hours remaining until target date (at 00:00:00)
   const getHoursRemaining = (endDateStr: string): number => {
@@ -587,7 +668,7 @@ export default function App() {
                           <button
                             type="button"
                             id={`dz-btn-cancel-${sub.id}`}
-                            onClick={() => cancelSubscription(sub.id)}
+                            onClick={() => cancelSubscription(sub.id, 'danger_zone')}
                             className="px-3 py-1.5 bg-[#ffcbd1] hover:bg-[#ffa3ad] text-black border-[2px] border-black text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_#000000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[0px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-1"
                           >
                             <X className="w-3.5 h-3.5 shrink-0" />

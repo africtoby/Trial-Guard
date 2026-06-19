@@ -40,4 +40,9 @@ npm install
 npm run dev
 
 ```
+### you can also access it here 
+https://trial-guard-rho.vercel.app/
+
+### Licence
+MIT
 </details>
